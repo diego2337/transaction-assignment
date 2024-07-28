@@ -3,5 +3,5 @@ CREATE TABLE account_category (
     category_id varchar(4) NOT NULL,
     total_amount float NOT NULL,
     FOREIGN KEY (account_id) REFERENCES account(id),
-    FOREIGN KEY (category_id) REFERENCES category(id)
+    FOREIGN KEY (category_id) REFERENCES category(mcc)
 );

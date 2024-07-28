@@ -1,7 +1,7 @@
 version: "3"
 services:
-  transactionAssignment:
-    container_name: transactionAssignment
+  transaction_assignment:
+    container_name: transaction_assignment
     build:
       context: .
     ports:
