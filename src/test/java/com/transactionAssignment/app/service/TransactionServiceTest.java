@@ -60,4 +60,36 @@ public class TransactionServiceTest {
 
         assertEquals(transactionResponseDTO.getCode(), "00");
     }
+
+    @Test
+    public void testExecuteAccountNotFound() {
+        TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
+        doReturn(Optional.empty()).when(this.accountRepository).findById(anyString());
+
+        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+
+        assertEquals(transactionResponseDTO.getCode(), "07");
+    }
+
+    @Test
+    public void testExecuteFindAccountButNotAccountCategory() {
+        TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-meal");
+        Account expectedAccount = Fixture.from(Account.class).gimme("account-food-only");
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
+
+        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+
+        assertEquals(transactionResponseDTO.getCode(), "07");
+    }
+
+    @Test
+    public void testExecuteFindAccountCategoryButHasNotEnoughCredit() {
+        TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
+        Account expectedAccount = Fixture.from(Account.class).gimme("account-with-no-money");
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
+
+        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+
+        assertEquals(transactionResponseDTO.getCode(), "07");
+    }
 }

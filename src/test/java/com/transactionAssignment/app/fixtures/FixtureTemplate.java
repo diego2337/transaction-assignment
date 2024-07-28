@@ -34,20 +34,44 @@ public class FixtureTemplate implements TemplateLoader {
         }});
 
         Fixture.of(AccountCategory.class).addTemplate("account-category-food", new Rule(){{
-//            add("account", one(Account.class, "account"));
             add("category", one(Category.class, "category-food"));
             add("totalAmount", 100.00f);
         }});
 
         Fixture.of(AccountCategory.class).addTemplate("account-category-meal", new Rule(){{
-//            add("account", one(Account.class, "account"));
             add("category", one(Category.class, "category-meal"));
             add("totalAmount", 100.00f);
+        }});
+
+        Fixture.of(AccountCategory.class).addTemplate("account-category-food-with-no-money", new Rule(){{
+            add("category", one(Category.class, "category-food"));
+            add("totalAmount", 0.0f);
+        }});
+
+        Fixture.of(AccountCategory.class).addTemplate("account-category-meal-with-no-money", new Rule(){{
+            add("category", one(Category.class, "category-meal"));
+            add("totalAmount", 0.0f);
         }});
 
         Fixture.of(Account.class).addTemplate("account", new Rule(){{
             add("id", UUID.randomUUID().toString());
             add("accountCategories", has(3).of(AccountCategory.class, "account-category-food", "account-category-meal", "account-category-meal"));
+            add("createdAt", LocalDateTime.now());
+            add("updatedAt", LocalDateTime.now());
+        }});
+
+        Fixture.of(Account.class).addTemplate("account-with-no-money", new Rule(){{
+            add("id", UUID.randomUUID().toString());
+            add("accountCategories", has(3).of(
+                    AccountCategory.class, "account-category-food-with-no-money", "account-category-meal-with-no-money", "account-category-meal-with-no-money"
+            ));
+            add("createdAt", LocalDateTime.now());
+            add("updatedAt", LocalDateTime.now());
+        }});
+
+        Fixture.of(Account.class).addTemplate("account-food-only", new Rule(){{
+            add("id", UUID.randomUUID().toString());
+            add("accountCategories", has(2).of(AccountCategory.class, "account-category-food", "account-category-food"));
             add("createdAt", LocalDateTime.now());
             add("updatedAt", LocalDateTime.now());
         }});
