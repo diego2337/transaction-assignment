@@ -15,6 +15,7 @@ import java.util.List;
 @Entity
 public class Category {
     @Id
+    @Column(name = "mcc")
     private String mcc;
 
     @NotNull

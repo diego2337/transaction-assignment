@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Setter
 @Entity
 @Table(name = "employer_delivery_agent")
-@IdClass(AccountCategory.class)
+@IdClass(AccountCategoryId.class)
 public class AccountCategory {
     @Id
     @ManyToOne
@@ -19,7 +19,7 @@ public class AccountCategory {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "category_id", referencedColumnName = "id")
+    @JoinColumn(name = "category_id", referencedColumnName = "mcc")
     private Category category;
 
     private float totalAmount;

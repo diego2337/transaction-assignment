@@ -33,7 +33,7 @@ public class TransactionService {
     private CategoryRepository categoryRepository;
 
     @Transactional(rollbackFor = Exception.class)
-    public TransactionResponseDTO execute(TransactionRequestDTO transactionRequestDTO) {
+    public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
             log.info("Transaction::execute - try to find mcc -> {}", transactionRequestDTO.getMcc());
             if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {

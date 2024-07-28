@@ -5,7 +5,9 @@ services:
     build:
       context: .
     ports:
-      - 8082:80
+      - 8080:8080
+    depends_on:
+      - postgres
   flyway:
     image: flyway/flyway:6-alpine
     command: -url=jdbc:postgresql://postgres:5432/transactionAssignment -schemas=transactionAssignment -user=transactionAssignment -password=transactionAssignment -connectRetries=60 migrate

@@ -1,6 +1,5 @@
 package com.transactionAssignment.app.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -29,9 +28,11 @@ public class Transaction {
     private UUID id;
 
     @NotNull
+    @Column(insertable = false, updatable = false)
     private String accountId;
 
     @NotNull
+    @Column(name = "mcc", insertable = false, updatable = false)
     private String mcc;
 
     @NotNull

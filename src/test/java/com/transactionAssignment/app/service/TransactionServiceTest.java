@@ -41,13 +41,13 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testExecuteFoodTransaction() {
+    public void testAuthorizeFoodTransaction() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account");
         doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "00");
         verify(this.accountRepository, times(1)).save(any());
@@ -55,12 +55,12 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testExecuteAccountNotFound() {
+    public void testAuthorizeAccountNotFound() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
         doReturn(Optional.empty()).when(this.accountRepository).findById(anyString());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "07");
         verify(this.accountRepository, never()).save(any());
@@ -68,13 +68,13 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testExecuteFindAccountButNotAccountCategory() {
+    public void testAuthorizeFindAccountButNotAccountCategory() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-meal");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-food-only");
         doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "07");
         verify(this.accountRepository, never()).save(any());
@@ -82,13 +82,13 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testExecuteFindAccountCategoryButHasNotEnoughCredit() {
+    public void testAuthorizeFindAccountCategoryButHasNotEnoughCredit() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-with-no-money");
         doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "07");
         verify(this.accountRepository, never()).save(any());
@@ -96,11 +96,11 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testExecuteFindNoMcc() {
+    public void testAuthorizeFindNoMcc() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("invalid-mcc");
         doReturn(Optional.empty()).when(this.categoryRepository).findById(anyString());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.execute(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "07");
         verify(this.accountRepository, never()).findById(any());
