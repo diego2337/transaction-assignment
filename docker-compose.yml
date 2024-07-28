@@ -1,0 +1,29 @@
+version: "3"
+services:
+  transactionAssignment:
+    container_name: transactionAssignment
+    build:
+      context: .
+    ports:
+      - 8082:80
+  flyway:
+    image: flyway/flyway:6-alpine
+    command: -url=jdbc:postgresql://postgres:5432/transactionAssignment -schemas=transactionAssignment -user=transactionAssignment -password=transactionAssignment -connectRetries=60 migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql
+      - ./src/main/resources/conf:/flyway/conf
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:12-alpine
+    restart: always
+    container_name: transactionAssignment-database
+    environment:
+      - POSTGRES_USER=transactionAssignment
+      - POSTGRES_PASSWORD=transactionAssignment
+    ports:
+      - 5432:5432
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+volumes:
+  database-data:

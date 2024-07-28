@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  servlet:
+    context-path : /transaction-assignment
+
+logging:
+  level:
+    com: INFO
+
+url:
+  internal:
+    gateway: http://localhost:8082/transaction-assignment
+
+spring:
+  flyway:
+    enabled: false
+    baselineOnMigrate: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/transactionAssignment?currentSchema=transaction
+    username: transactionAssignment #postgres #usrdbmodelo #rl_dbmodelo_adm
+    password: transactionAssignment #changeme #usrdbmodelodev #rl_dbmodelo_admdev
+    driverClassName: org.postgresql.Driver
+
+management:
+  endpoint:
+    health:
+      show-details: "always"
+  endpoints:
+    web:
+      exposure:
+        include: "*"

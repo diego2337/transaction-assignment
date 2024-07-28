@@ -33,6 +33,14 @@ public class FixtureTemplate implements TemplateLoader {
             add("mcc", "5811");
         }});
 
+        Fixture.of(TransactionRequestDTO.class).addTemplate("invalid-mcc", new Rule(){{
+            add("id", UUID.randomUUID().toString());
+            add("accountId", UUID.randomUUID().toString());
+            add("amount", "234.56");
+            add("merchant", "Unknown");
+            add("mcc", "1111");
+        }});
+
         Fixture.of(AccountCategory.class).addTemplate("account-category-food", new Rule(){{
             add("category", one(Category.class, "category-food"));
             add("totalAmount", 100.00f);
@@ -77,7 +85,6 @@ public class FixtureTemplate implements TemplateLoader {
         }});
 
         Fixture.of(Category.class).addTemplate("category-food", new Rule(){{
-            add("id", UUID.randomUUID().toString());
             add("mcc", "5411");
             add("category", CategoryStatusEnum.FOOD);
             add("createdAt", LocalDateTime.now());
@@ -85,7 +92,6 @@ public class FixtureTemplate implements TemplateLoader {
         }});
 
         Fixture.of(Category.class).addTemplate("category-meal", new Rule(){{
-            add("id", UUID.randomUUID().toString());
             add("mcc", "5811");
             add("category", CategoryStatusEnum.MEAL);
             add("createdAt", LocalDateTime.now());
