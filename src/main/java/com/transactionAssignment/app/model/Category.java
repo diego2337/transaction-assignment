@@ -13,6 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Table(name = "category")
 public class Category {
     @Id
     @Column(name = "mcc")

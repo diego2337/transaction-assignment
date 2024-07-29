@@ -12,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
+@Table(name = "transaction")
 @RequiredArgsConstructor
 public class Transaction {
     public Transaction(UUID uuid, String accountId, String mcc, String merchant, float amount, LocalDateTime createdAt, LocalDateTime updatedAt) {

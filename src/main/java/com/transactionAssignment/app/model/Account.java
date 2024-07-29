@@ -15,6 +15,7 @@ import java.util.Optional;
 @Getter
 @Setter
 @Entity
+@Table(name = "account")
 public class Account {
     @Id
     private String id;
