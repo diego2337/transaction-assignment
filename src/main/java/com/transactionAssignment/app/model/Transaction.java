@@ -29,11 +29,10 @@ public class Transaction {
     private UUID id;
 
     @NotNull
-    @Column(insertable = false, updatable = false)
     private String accountId;
 
     @NotNull
-    @Column(name = "mcc", insertable = false, updatable = false)
+    @Column(name = "mcc")
     private String mcc;
 
     @NotNull
@@ -43,11 +42,11 @@ public class Transaction {
     private float totalAmount;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "accountId", referencedColumnName = "id")
+    @JoinColumn(name = "accountId", referencedColumnName = "id", insertable = false, updatable = false)
     private Account account;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "mcc", referencedColumnName = "mcc")
+    @JoinColumn(name = "mcc", referencedColumnName = "mcc", insertable = false, updatable = false)
     private Category category;
 
     @NotNull

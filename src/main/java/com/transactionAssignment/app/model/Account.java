@@ -20,7 +20,7 @@ public class Account {
     @Id
     private String id;
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AccountCategory> accountCategories;
 
     @NotNull

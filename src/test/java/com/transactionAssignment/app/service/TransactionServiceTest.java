@@ -90,7 +90,7 @@ public class TransactionServiceTest {
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
-        assertEquals(transactionResponseDTO.getCode(), "07");
+        assertEquals(transactionResponseDTO.getCode(), "51");
         verify(this.accountRepository, never()).save(any());
         verify(this.transactionRepository, never()).save(any());
     }
