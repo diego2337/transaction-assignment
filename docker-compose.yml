@@ -10,7 +10,7 @@ services:
       - postgres
   flyway:
     image: flyway/flyway:6-alpine
-    command: -url=jdbc:postgresql://postgres:5432/transactionAssignment -schemas=transactionAssignment -user=transactionAssignment -password=transactionAssignment -connectRetries=60 migrate
+    command: -url=jdbc:postgresql://postgres:5432/transactionAssignment -schemas=public -user=transactionAssignment -password=transactionAssignment -connectRetries=60 migrate
     volumes:
       - ./src/main/resources/db/migration:/flyway/sql
       - ./src/main/resources/conf:/flyway/conf

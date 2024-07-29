@@ -16,7 +16,7 @@ spring:
     enabled: false
     baselineOnMigrate: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/transactionAssignment?currentSchema=transaction
+    url: jdbc:postgresql://localhost:5432/transactionAssignment?currentSchema=public
     username: transactionAssignment #postgres #usrdbmodelo #rl_dbmodelo_adm
     password: transactionAssignment #changeme #usrdbmodelodev #rl_dbmodelo_admdev
     driverClassName: org.postgresql.Driver
