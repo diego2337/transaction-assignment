@@ -67,6 +67,8 @@ public class TransactionService {
                             log.info("Transaction::execute - return status OK transaction");
                             return new TransactionResponseDTO("00");
                         }
+                        log.info("Transaction::execute - account does not have enough credit; returns appropriate status");
+                        return new TransactionResponseDTO("51");
                     }
                 }
             }
