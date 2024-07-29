@@ -47,9 +47,9 @@ public class TransactionService {
                     if (accountCategory.isPresent()) {
                         AccountCategory accountCategoryToModify = accountCategory.get();
                         log.info("Transaction::execute - accountCategory found");
-                        if (accountCategory.get().hasEnoughCredit(transactionRequestDTO.getAmount())) {
+                        if (accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
                             log.info("Transaction::execute - has enough amount; subtract value and update timestamp");
-                            accountCategoryToModify.setTotalAmount(accountCategoryToModify.getTotalAmount() - transactionRequestDTO.getAmount());
+                            accountCategoryToModify.setTotalAmount(accountCategoryToModify.getTotalAmount() - transactionRequestDTO.getTotalAmount());
                             accountToModify.setUpdatedAt(LocalDateTime.now());
                             log.info("Transaction::execute - save account changes in database");
                             this.accountRepository.save(accountToModify);
@@ -60,7 +60,7 @@ public class TransactionService {
                                     transactionRequestDTO.getAccountId(),
                                     transactionRequestDTO.getMcc(),
                                     transactionRequestDTO.getMerchant(),
-                                    transactionRequestDTO.getAmount(),
+                                    transactionRequestDTO.getTotalAmount(),
                                     LocalDateTime.now(),
                                     LocalDateTime.now());
                             this.transactionRepository.save(transaction);
