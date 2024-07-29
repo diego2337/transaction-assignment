@@ -38,7 +38,7 @@ public class TransactionService {
             log.info("Transaction::execute - try to find mcc -> {}", transactionRequestDTO.getMcc());
             if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
                 log.info("Transaction::execute - try to find account by id -> {}", transactionRequestDTO.getAccountId());
-                Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getId());
+                Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
                 if (account.isPresent()) {
                     Account accountToModify = account.get();
                     log.info("Transaction::execute - account found, id -> {}", accountToModify.getId());

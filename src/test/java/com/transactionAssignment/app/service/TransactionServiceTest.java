@@ -44,8 +44,8 @@ public class TransactionServiceTest {
     public void testAuthorizeFoodTransaction() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
-        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
@@ -57,8 +57,8 @@ public class TransactionServiceTest {
     @Test
     public void testAuthorizeAccountNotFound() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
-        doReturn(Optional.empty()).when(this.accountRepository).findById(anyString());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
+        doReturn(Optional.empty()).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
@@ -71,8 +71,8 @@ public class TransactionServiceTest {
     public void testAuthorizeFindAccountButNotAccountCategory() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-meal");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-food-only");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
-        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
@@ -85,8 +85,8 @@ public class TransactionServiceTest {
     public void testAuthorizeFindAccountCategoryButHasNotEnoughCredit() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-with-no-money");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(anyString());
-        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(anyString());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
@@ -98,7 +98,7 @@ public class TransactionServiceTest {
     @Test
     public void testAuthorizeFindNoMcc() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("invalid-mcc");
-        doReturn(Optional.empty()).when(this.categoryRepository).findById(anyString());
+        doReturn(Optional.empty()).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
