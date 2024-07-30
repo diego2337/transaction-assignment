@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 
 import java.util.Optional;
+
+import static com.transactionAssignment.app.service.TransactionService.CASH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
@@ -48,14 +50,14 @@ public class TransactionServiceTest {
     public void testAuthorizeFoodTransaction() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "00");
-        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
+        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.transactionService, times(1)).updateAccountAndAuthorizeTransaction(
                 any(),
                 any(),
@@ -66,14 +68,13 @@ public class TransactionServiceTest {
     @Test
     public void testAuthorizeAccountNotFound() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Optional.empty()).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "07");
-        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
+        verify(this.categoryRepository, never()).findById(transactionRequestDTO.getMcc());
         verify(this.transactionService, never()).updateAccountAndAuthorizeTransaction(
                 any(),
                 any(),
@@ -85,14 +86,15 @@ public class TransactionServiceTest {
     public void testAuthorizeNotFindAccountWithMealCategoryButFindWithCashCategory() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-meal");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-food-and-cash");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
+        TransactionRequestDTO transactionRequestDTOSpy = Mockito.spy(transactionRequestDTO);
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTOSpy);
 
         assertEquals(transactionResponseDTO.getCode(), "00");
-        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
+        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.transactionService, times(1)).updateAccountAndAuthorizeTransaction(
                 any(),
                 any(),
@@ -104,14 +106,14 @@ public class TransactionServiceTest {
     public void testAuthorizeHasNotEnoughCreditForAnyCategory() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-with-no-money");
-        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
+        doReturn(Optional.of(Category.class)).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals(transactionResponseDTO.getCode(), "51");
-        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(this.accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
+        verify(this.categoryRepository, times(1)).findById(any());
         verify(this.transactionService, never()).updateAccountAndAuthorizeTransaction(
                 any(),
                 any(),
@@ -120,16 +122,24 @@ public class TransactionServiceTest {
     }
 
     @Test
-    public void testAuthorizeFindNoMcc() {
+    public void testAuthorizeFindNoMccButHasCreditInCash() {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("invalid-mcc");
+        Account expectedAccount = Fixture.from(Account.class).gimme("account-food-and-cash");
+        TransactionRequestDTO transactionRequestDTOSpy = Mockito.spy(transactionRequestDTO);
+        doReturn(Optional.of(expectedAccount)).when(this.accountRepository).findById(transactionRequestDTO.getAccountId());
         doReturn(Optional.empty()).when(this.categoryRepository).findById(transactionRequestDTO.getMcc());
 
-        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
+        TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTOSpy);
 
-        assertEquals(transactionResponseDTO.getCode(), "07");
-        verify(this.accountRepository, never()).findById(any());
-        verify(this.accountRepository, never()).save(any());
-        verify(this.transactionRepository, never()).save(any());
+        assertEquals(transactionResponseDTO.getCode(), "00");
+        verify(transactionRequestDTOSpy, times(1)).setMcc(CASH);
+        verify(this.accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
+        verify(this.categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
+        verify(this.transactionService, times(1)).updateAccountAndAuthorizeTransaction(
+                any(),
+                any(),
+                any()
+        );
     }
 
     @Test

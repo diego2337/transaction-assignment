@@ -32,33 +32,37 @@ public class TransactionService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    private static String CASH = "5011";
+    public static String CASH = "5011";
 
     @Transactional(rollbackFor = Exception.class)
     public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
-            log.info("Transaction::authorize - try to find mcc -> {}", transactionRequestDTO.getMcc());
-            if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
-                log.info("Transaction::authorize - try to find account by id -> {}", transactionRequestDTO.getAccountId());
-                Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
-                if (account.isPresent()) {
-                    Account accountToModify = account.get();
+            log.info("Transaction::authorize - try to find by merchant name -> {}", transactionRequestDTO.getMerchant());
+
+            log.info("Transaction::authorize - try to find account by id -> {}", transactionRequestDTO.getAccountId());
+            Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
+            Optional<AccountCategory> accountCategory;
+            if (account.isPresent()) {
+                Account accountToModify = account.get();
+                log.info("Transaction::authorize - try to find mcc -> {}", transactionRequestDTO.getMcc());
+                if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
                     log.info("Transaction::authorize - account found, id -> {}", accountToModify.getId());
                     log.info("Transaction::authorize - try to find accountCategory, mcc -> {}", transactionRequestDTO.getMcc());
-                    Optional<AccountCategory> accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
+                    accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
                     if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
                         log.info("Transaction::authorize - accountCategory found for mcc -> {}", transactionRequestDTO.getMcc());
                         return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                     }
-                    log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
-                    accountCategory = accountToModify.findCategoryByMcc(CASH);
-                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::authorize - accountCategory found for CASH -> {}", CASH);
-                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
-                    }
-                    log.info("Transaction::authorize - no cash found for any category, return status");
-                    return new TransactionResponseDTO("51");
                 }
+                log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
+                transactionRequestDTO.setMcc(CASH);
+                accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
+                if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                    log.info("Transaction::authorize - accountCategory found for CASH -> {}", CASH);
+                    return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
+                }
+                log.info("Transaction::authorize - no cash found for any category, return status");
+                return new TransactionResponseDTO("51");
             }
         } catch (Exception e) {
             log.error("Transaction::authorize - ERROR: error -> {}", e.getMessage());
