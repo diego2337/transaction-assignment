@@ -37,31 +37,31 @@ public class TransactionService {
     @Transactional(rollbackFor = Exception.class)
     public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
-            log.info("Transaction::execute - try to find mcc -> {}", transactionRequestDTO.getMcc());
+            log.info("Transaction::authorize - try to find mcc -> {}", transactionRequestDTO.getMcc());
             if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
-                log.info("Transaction::execute - try to find account by id -> {}", transactionRequestDTO.getAccountId());
+                log.info("Transaction::authorize - try to find account by id -> {}", transactionRequestDTO.getAccountId());
                 Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
                 if (account.isPresent()) {
                     Account accountToModify = account.get();
-                    log.info("Transaction::execute - account found, id -> {}", accountToModify.getId());
-                    log.info("Transaction::execute - try to find accountCategory, mcc -> {}", transactionRequestDTO.getMcc());
+                    log.info("Transaction::authorize - account found, id -> {}", accountToModify.getId());
+                    log.info("Transaction::authorize - try to find accountCategory, mcc -> {}", transactionRequestDTO.getMcc());
                     Optional<AccountCategory> accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
                     if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::execute - accountCategory found for mcc -> {}", transactionRequestDTO.getMcc());
+                        log.info("Transaction::authorize - accountCategory found for mcc -> {}", transactionRequestDTO.getMcc());
                         return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                     }
-                    log.info("Transaction::execute - account does not have mcc; try to authorize with fallback using CASH category");
+                    log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
                     accountCategory = accountToModify.findCategoryByMcc(CASH);
                     if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::execute - accountCategory found for CASH -> {}", CASH);
+                        log.info("Transaction::authorize - accountCategory found for CASH -> {}", CASH);
                         return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                     }
-                    log.info("Transaction::execute - no cash found for any category, return status");
+                    log.info("Transaction::authorize - no cash found for any category, return status");
                     return new TransactionResponseDTO("51");
                 }
             }
         } catch (Exception e) {
-            log.error("Transaction::execute - ERROR: error -> {}", e.getMessage());
+            log.error("Transaction::authorize - ERROR: error -> {}", e.getMessage());
         }
         return new TransactionResponseDTO("07");
     }
