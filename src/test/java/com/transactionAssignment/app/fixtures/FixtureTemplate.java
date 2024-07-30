@@ -26,14 +26,14 @@ public class FixtureTemplate implements TemplateLoader {
 
         Fixture.of(TransactionRequestDTO.class).addTemplate("valid-meal", new Rule(){{
             add("accountId", UUID.randomUUID().toString());
-            add("totalAmount", "234.56");
+            add("totalAmount", 23.56f);
             add("merchant", "Meal");
             add("mcc", "5811");
         }});
 
         Fixture.of(TransactionRequestDTO.class).addTemplate("invalid-mcc", new Rule(){{
             add("accountId", UUID.randomUUID().toString());
-            add("totalAmount", "234.56");
+            add("totalAmount", 23.56f);
             add("merchant", "Unknown");
             add("mcc", "1111");
         }});
@@ -45,6 +45,11 @@ public class FixtureTemplate implements TemplateLoader {
 
         Fixture.of(AccountCategory.class).addTemplate("account-category-meal", new Rule(){{
             add("category", one(Category.class, "category-meal"));
+            add("totalAmount", 100.00f);
+        }});
+
+        Fixture.of(AccountCategory.class).addTemplate("account-category-cash", new Rule(){{
+            add("category", one(Category.class, "category-cash"));
             add("totalAmount", 100.00f);
         }});
 
@@ -81,6 +86,13 @@ public class FixtureTemplate implements TemplateLoader {
             add("updatedAt", LocalDateTime.now());
         }});
 
+        Fixture.of(Account.class).addTemplate("account-food-and-cash", new Rule(){{
+            add("id", UUID.randomUUID().toString());
+            add("accountCategories", has(2).of(AccountCategory.class, "account-category-food", "account-category-cash"));
+            add("createdAt", LocalDateTime.now());
+            add("updatedAt", LocalDateTime.now());
+        }});
+
         Fixture.of(Category.class).addTemplate("category-food", new Rule(){{
             add("mcc", "5411");
             add("category", CategoryStatusEnum.FOOD);
@@ -91,6 +103,13 @@ public class FixtureTemplate implements TemplateLoader {
         Fixture.of(Category.class).addTemplate("category-meal", new Rule(){{
             add("mcc", "5811");
             add("category", CategoryStatusEnum.MEAL);
+            add("createdAt", LocalDateTime.now());
+            add("updatedAt", LocalDateTime.now());
+        }});
+
+        Fixture.of(Category.class).addTemplate("category-cash", new Rule(){{
+            add("mcc", "5011");
+            add("category", CategoryStatusEnum.CASH);
             add("createdAt", LocalDateTime.now());
             add("updatedAt", LocalDateTime.now());
         }});
