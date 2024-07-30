@@ -32,6 +32,8 @@ public class TransactionService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    private static String CASH = "5011";
+
     @Transactional(rollbackFor = Exception.class)
     public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
@@ -44,37 +46,49 @@ public class TransactionService {
                     log.info("Transaction::execute - account found, id -> {}", accountToModify.getId());
                     log.info("Transaction::execute - try to find accountCategory, mcc -> {}", transactionRequestDTO.getMcc());
                     Optional<AccountCategory> accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
-                    if (accountCategory.isPresent()) {
-                        AccountCategory accountCategoryToModify = accountCategory.get();
-                        log.info("Transaction::execute - accountCategory found");
-                        if (accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                            log.info("Transaction::execute - has enough amount; subtract value and update timestamp");
-                            accountCategoryToModify.setTotalAmount(accountCategoryToModify.getTotalAmount() - transactionRequestDTO.getTotalAmount());
-                            accountToModify.setUpdatedAt(LocalDateTime.now());
-                            log.info("Transaction::execute - save account changes in database");
-                            this.accountRepository.save(accountToModify);
-
-                            log.info("Transaction::execute - create transaction and save in database");
-                            Transaction transaction = new Transaction(
-                                    UUID.randomUUID(),
-                                    transactionRequestDTO.getAccountId(),
-                                    transactionRequestDTO.getMcc(),
-                                    transactionRequestDTO.getMerchant(),
-                                    transactionRequestDTO.getTotalAmount(),
-                                    LocalDateTime.now(),
-                                    LocalDateTime.now());
-                            this.transactionRepository.save(transaction);
-                            log.info("Transaction::execute - return status OK transaction");
-                            return new TransactionResponseDTO("00");
-                        }
-                        log.info("Transaction::execute - account does not have enough credit; returns appropriate status");
-                        return new TransactionResponseDTO("51");
+                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                        log.info("Transaction::execute - accountCategory found for mcc -> {}", transactionRequestDTO.getMcc());
+                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                     }
+                    log.info("Transaction::execute - account does not have mcc; try to authorize with fallback using CASH category");
+                    accountCategory = accountToModify.findCategoryByMcc(CASH);
+                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                        log.info("Transaction::execute - accountCategory found for CASH -> {}", CASH);
+                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
+                    }
+                    log.info("Transaction::execute - no cash found for any category, return status");
+                    return new TransactionResponseDTO("51");
                 }
             }
         } catch (Exception e) {
             log.error("Transaction::execute - ERROR: error -> {}", e.getMessage());
         }
         return new TransactionResponseDTO("07");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public TransactionResponseDTO updateAccountAndAuthorizeTransaction(
+            TransactionRequestDTO transactionRequestDTO,
+            Account account,
+            AccountCategory accountCategory
+    ) {
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - has enough amount; subtract value and update timestamp");
+        accountCategory.setTotalAmount(accountCategory.getTotalAmount() - transactionRequestDTO.getTotalAmount());
+        account.setUpdatedAt(LocalDateTime.now());
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - save account changes in database");
+        this.accountRepository.save(account);
+
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - create transaction and save in database");
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                transactionRequestDTO.getAccountId(),
+                transactionRequestDTO.getMcc(),
+                transactionRequestDTO.getMerchant(),
+                transactionRequestDTO.getTotalAmount(),
+                LocalDateTime.now(),
+                LocalDateTime.now());
+        this.transactionRepository.save(transaction);
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - return status OK transaction");
+        return new TransactionResponseDTO("00");
     }
 }
