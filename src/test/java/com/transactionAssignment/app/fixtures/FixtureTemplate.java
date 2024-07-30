@@ -18,7 +18,6 @@ public class FixtureTemplate implements TemplateLoader {
     @Override
     public void load() {
         Fixture.of(TransactionRequestDTO.class).addTemplate("valid-food", new Rule(){{
-            add("id", UUID.randomUUID().toString());
             add("accountId", UUID.randomUUID().toString());
             add("totalAmount", 23.56f);
             add("merchant", "Food");
@@ -26,7 +25,6 @@ public class FixtureTemplate implements TemplateLoader {
         }});
 
         Fixture.of(TransactionRequestDTO.class).addTemplate("valid-meal", new Rule(){{
-            add("id", UUID.randomUUID().toString());
             add("accountId", UUID.randomUUID().toString());
             add("totalAmount", "234.56");
             add("merchant", "Meal");
@@ -34,7 +32,6 @@ public class FixtureTemplate implements TemplateLoader {
         }});
 
         Fixture.of(TransactionRequestDTO.class).addTemplate("invalid-mcc", new Rule(){{
-            add("id", UUID.randomUUID().toString());
             add("accountId", UUID.randomUUID().toString());
             add("totalAmount", "234.56");
             add("merchant", "Unknown");
