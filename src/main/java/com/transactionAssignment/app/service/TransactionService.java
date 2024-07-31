@@ -4,6 +4,7 @@ import com.transactionAssignment.app.dto.TransactionRequestDTO;
 import com.transactionAssignment.app.dto.TransactionResponseDTO;
 import com.transactionAssignment.app.model.Account;
 import com.transactionAssignment.app.model.AccountCategory;
+import com.transactionAssignment.app.model.Merchant;
 import com.transactionAssignment.app.model.Transaction;
 import com.transactionAssignment.app.repository.AccountRepository;
 import com.transactionAssignment.app.repository.CategoryRepository;
@@ -32,33 +33,56 @@ public class TransactionService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private MerchantService merchantService;
+
     public static String CASH = "5011";
 
     @Transactional(rollbackFor = Exception.class)
     public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
-            log.info("Transaction::authorize - try to find by merchant name -> {}", transactionRequestDTO.getMerchant());
-
             log.info("Transaction::authorize - try to find account by id -> {}", transactionRequestDTO.getAccountId());
             Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
-            Optional<AccountCategory> accountCategory;
             if (account.isPresent()) {
                 Account accountToModify = account.get();
+                log.info("Transaction::authorize - account found, id -> {}", accountToModify.getId());
+
+                log.info("Transaction::authorize - try to find by merchant name -> {}", transactionRequestDTO.getMerchant());
+                String formattedAndLowerCasedMerchantName = transactionRequestDTO.getMerchant().trim().replaceAll("\\s+", " ").toLowerCase();
+                Optional<Merchant> merchant = merchantService.findByName(formattedAndLowerCasedMerchantName);
+                Optional<AccountCategory> accountCategory;
+                if (merchant.isPresent()) {
+                    log.info("Transaction::authorize - merchant name found");
+                    log.info("Transaction::authorize - try to find accountCategory (merchant), mcc -> {}", merchant.get().getMcc());
+                    accountCategory = accountToModify.findCategoryByMcc(merchant.get().getMcc());
+                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                        log.info("Transaction::authorize - set mcc from merchant");
+                        transactionRequestDTO.setMcc(merchant.get().getMcc());
+                        log.info("Transaction::authorize - upsert merchant information");
+                        merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
+                        log.info("Transaction::authorize - accountCategory found for (merchant) mcc -> {}", merchant.get().getMcc());
+                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
+                    }
+                }
                 log.info("Transaction::authorize - try to find mcc -> {}", transactionRequestDTO.getMcc());
                 if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
-                    log.info("Transaction::authorize - account found, id -> {}", accountToModify.getId());
-                    log.info("Transaction::authorize - try to find accountCategory, mcc -> {}", transactionRequestDTO.getMcc());
+                    log.info("Transaction::authorize - try to find accountCategory (mcc), mcc -> {}", transactionRequestDTO.getMcc());
                     accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
                     if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::authorize - accountCategory found for mcc -> {}", transactionRequestDTO.getMcc());
+                        log.info("Transaction::authorize - upsert merchant information (mcc)");
+                        merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
+                        log.info("Transaction::authorize - accountCategory found for (mcc) mcc -> {}", transactionRequestDTO.getMcc());
                         return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                     }
                 }
                 log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
                 transactionRequestDTO.setMcc(CASH);
+                log.info("Transaction::authorize - try to find accountCategory (fallback), mcc -> {}", transactionRequestDTO.getMcc());
                 accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
                 if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                    log.info("Transaction::authorize - accountCategory found for CASH -> {}", CASH);
+                    log.info("Transaction::authorize - upsert merchant information (fallback)");
+                    merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
+                    log.info("Transaction::authorize - accountCategory found for (fallback) -> {}", CASH);
                     return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
                 }
                 log.info("Transaction::authorize - no cash found for any category, return status");
