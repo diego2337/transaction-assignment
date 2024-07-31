@@ -1,6 +1,7 @@
 package com.transactionAssignment.app.model;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -12,7 +13,16 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name = "merchant")
+@RequiredArgsConstructor
 public class Merchant {
+    public Merchant(UUID uuid, String name, String mcc, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = uuid;
+        this.name = name;
+        this.mcc = mcc;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     @Id
     private UUID id;
 
