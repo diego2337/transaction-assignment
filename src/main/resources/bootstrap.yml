@@ -7,10 +7,6 @@ logging:
   level:
     com: INFO
 
-url:
-  internal:
-    gateway: http://localhost:8082/transaction-assignment
-
 spring:
   flyway:
     enabled: false
