@@ -1,9 +1,8 @@
 package com.transactionAssignment.app.model;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -16,6 +15,7 @@ import java.util.Optional;
 @Setter
 @Entity
 @Table(name = "account")
+@Slf4j
 public class Account {
     @Id
     private String id;
@@ -28,7 +28,10 @@ public class Account {
 
     private LocalDateTime updatedAt;
 
-    public Optional<AccountCategory> findCategoryByMcc(String mcc) {
-        return accountCategories.stream().filter(accountCategory -> accountCategory.getCategory().getMcc().equals(mcc)).findFirst();
+    public Optional<AccountCategory> findCategoryByMccs(List<String> mccs) {
+        return accountCategories.stream()
+                .filter(accountCategory -> accountCategory.getCategory().getMccCategories().stream()
+                        .anyMatch(mccCategory -> mccs.contains(mccCategory.getMcc())))
+                .findFirst();
     }
 }

@@ -21,25 +21,26 @@ public class MerchantService {
         return this.merchantRepository.findByName(name);
     }
 
-    public void upsertMerchant(String name, String mcc) {
+    public Merchant upsertMerchant(String name, UUID categoryId) {
         Optional<Merchant> existingMerchant = this.merchantRepository.findByName(name);
         Merchant upsertMerchant;
         if (existingMerchant.isPresent()) {
             log.info("MerchantService::upsertMerchant - merchant exists in database; update mcc and updated_at timestamp");
             upsertMerchant = existingMerchant.get();
-            upsertMerchant.setMcc(mcc);
+            upsertMerchant.setCategoryId(categoryId);
             upsertMerchant.setUpdatedAt(LocalDateTime.now());
         } else {
             log.info("MerchantService::upsertMerchant - merchant does not exist in database; create new");
             upsertMerchant = new Merchant(
                     UUID.randomUUID(),
                     name,
-                    mcc,
+                    categoryId,
                     LocalDateTime.now(),
                     LocalDateTime.now()
             );
         }
         log.info("MerchantService::upsertMerchant - save merchant");
         merchantRepository.save(upsertMerchant);
+        return upsertMerchant;
     }
 }

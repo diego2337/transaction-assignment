@@ -27,9 +27,14 @@ public class TransactionController {
     @ApiOperation(value = "Autoriza a transação de um MCC")
     @PostMapping("/transaction")
     public ResponseEntity<TransactionResponseDTO> authorize(@Valid @RequestBody TransactionRequestDTO req) {
-        log.info("TransactionController::config req={}", req);
-        TransactionResponseDTO res = transactionService.authorize(req);
-        log.info("TransactionController::config res={}", res);
-        return ResponseEntity.status(HttpStatus.OK).body(res);
+        try {
+            log.info("TransactionController::config req={}", req);
+            TransactionResponseDTO res = transactionService.authorize(req);
+            log.info("TransactionController::config res={}", res);
+            return ResponseEntity.status(HttpStatus.OK).body(res);
+        } catch (Exception e) {
+            log.error("Transaction::controller - ERROR: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).body(new TransactionResponseDTO("07"));
+        }
     }
 }

@@ -3,28 +3,24 @@ package com.transactionAssignment.app.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "category")
-public class Category {
+@Table(name = "mcc_category")
+public class MccCategory {
+
     @Id
-    private UUID id;
+    private String mcc;
 
     @NotNull
-    private String name;
-
-    @OneToMany(mappedBy = "category")
-    private List<AccountCategory> accountCategories;
-
-    @OneToMany(mappedBy = "categoryId")
-    private List<MccCategory> mccCategories;
+    private UUID categoryId;
 
     @NotNull
     private LocalDateTime createdAt;

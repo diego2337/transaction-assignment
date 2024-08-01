@@ -2,7 +2,6 @@ package com.transactionAssignment.app.service;
 
 import br.com.six2six.fixturefactory.Fixture;
 import br.com.six2six.fixturefactory.loader.FixtureFactoryLoader;
-import com.transactionAssignment.app.enums.CategoryEnum;
 import com.transactionAssignment.app.model.Merchant;
 import com.transactionAssignment.app.repository.MerchantRepository;
 import org.junit.jupiter.api.BeforeAll;
@@ -13,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -57,24 +57,26 @@ public class MerchantServiceTest {
     @Test
     public void testCreateNewMerchantFromNameAndCategory() {
         String name = "new merchant name";
-        String mcc = CategoryEnum.fromName("MEAL").name();
+        UUID categoryId = UUID.randomUUID();
         doReturn(Optional.empty()).when(merchantRepository).findByName(name);
 
-        merchantService.upsertMerchant(name, mcc);
+        merchantService.upsertMerchant(name, categoryId);
 
         verify(merchantRepository, times(1)).findByName(name);
-        verify(merchantRepository, times(1)).save(any());
+        verify(merchantRepository, times(1)).save(any(Merchant.class));
     }
 
     @Test
     public void testUpdateExistingMerchantWithNewCategory() {
         String name = "meal merchant";
-        String mcc = CategoryEnum.fromName("MEAL").name();
+        UUID categoryId = UUID.randomUUID();
         Merchant existingMerchant = Fixture.from(Merchant.class).gimme("merchant-meal");
         doReturn(Optional.of(existingMerchant)).when(merchantRepository).findByName(name);
 
-        merchantService.upsertMerchant(name, mcc);
+        merchantService.upsertMerchant(name, categoryId);
 
+        assertEquals(categoryId, existingMerchant.getCategoryId());
+        assertNotNull(existingMerchant.getUpdatedAt());
         verify(merchantRepository, times(1)).findByName(name);
         verify(merchantRepository, times(1)).save(existingMerchant);
     }
