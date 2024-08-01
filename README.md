@@ -1,7 +1,10 @@
 # transaction-assignment
-Assignment to create a simple transaction API
+Assignment to create a simple transaction API, given a set of rules. Description of assignment kept under wraps.
 
-# (pt-BR) - L4
+## Collection
+[Transaction assignment collection (Postman, Insomnia)](public/transactionAssignment.json).
+
+## (pt-BR) - L4
 
 Segue a resposta para a seguinte pergunta:
 
@@ -136,3 +139,9 @@ public class DistributedLockingExample {
     }
 }
 ```
+
+## TODO
+- Create integration tests.
+- Implement distributed locking using [Jedis](https://github.com/redis/jedis).
+- Create a stress test to validate distributed locking using [JMeter](https://jmeter.apache.org/).
+- Fix Dockerfile to run with database.
