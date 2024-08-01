@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,87 +37,95 @@ public class TransactionService {
     @Autowired
     private MerchantService merchantService;
 
-    public static String CASH = "5011";
+    public static final String CASH = "5011";
 
     @Transactional(rollbackFor = Exception.class)
     public TransactionResponseDTO authorize(TransactionRequestDTO transactionRequestDTO) {
         try {
             log.info("Transaction::authorize - try to find account by id -> {}", transactionRequestDTO.getAccountId());
-            Optional<Account> account = this.accountRepository.findById(transactionRequestDTO.getAccountId());
-            if (account.isPresent()) {
-                Account accountToModify = account.get();
-                log.info("Transaction::authorize - account found, id -> {}", accountToModify.getId());
-
-                log.info("Transaction::authorize - try to find by merchant name -> {}", transactionRequestDTO.getMerchant());
-                String formattedAndLowerCasedMerchantName = transactionRequestDTO.getMerchant().trim().replaceAll("\\s+", " ").toLowerCase();
-                Optional<Merchant> merchant = merchantService.findByName(formattedAndLowerCasedMerchantName);
-                Optional<AccountCategory> accountCategory;
-                if (merchant.isPresent()) {
-                    log.info("Transaction::authorize - merchant name found");
-                    log.info("Transaction::authorize - try to find accountCategory (merchant), mcc -> {}", merchant.get().getMcc());
-                    accountCategory = accountToModify.findCategoryByMcc(merchant.get().getMcc());
-                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::authorize - set mcc from merchant");
-                        transactionRequestDTO.setMcc(merchant.get().getMcc());
-                        log.info("Transaction::authorize - upsert merchant information");
-                        merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
-                        log.info("Transaction::authorize - accountCategory found for (merchant) mcc -> {}", merchant.get().getMcc());
-                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
-                    }
-                }
-                log.info("Transaction::authorize - try to find mcc -> {}", transactionRequestDTO.getMcc());
-                if (categoryRepository.findById(transactionRequestDTO.getMcc()).isPresent()) {
-                    log.info("Transaction::authorize - try to find accountCategory (mcc), mcc -> {}", transactionRequestDTO.getMcc());
-                    accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
-                    if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                        log.info("Transaction::authorize - upsert merchant information (mcc)");
-                        merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
-                        log.info("Transaction::authorize - accountCategory found for (mcc) mcc -> {}", transactionRequestDTO.getMcc());
-                        return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
-                    }
-                }
-                log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
-                transactionRequestDTO.setMcc(CASH);
-                log.info("Transaction::authorize - try to find accountCategory (fallback), mcc -> {}", transactionRequestDTO.getMcc());
-                accountCategory = accountToModify.findCategoryByMcc(transactionRequestDTO.getMcc());
-                if (accountCategory.isPresent() && accountCategory.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
-                    log.info("Transaction::authorize - upsert merchant information (fallback)");
-                    merchantService.upsertMerchant(formattedAndLowerCasedMerchantName, transactionRequestDTO.getMcc());
-                    log.info("Transaction::authorize - accountCategory found for (fallback) -> {}", CASH);
-                    return this.updateAccountAndAuthorizeTransaction(transactionRequestDTO, accountToModify, accountCategory.get());
-                }
-                log.info("Transaction::authorize - no cash found for any category, return status");
-                return new TransactionResponseDTO("51");
+            Optional<Account> accountOptional = accountRepository.findById(transactionRequestDTO.getAccountId());
+            if (!accountOptional.isPresent()) {
+                log.warn("Transaction::authorize - account not found");
+                return new TransactionResponseDTO("07");
             }
+
+            Account account = accountOptional.get();
+            String merchantName = formatMerchantName(transactionRequestDTO.getMerchant());
+
+            log.info("Transaction::authorize - try to find by merchant name -> {}", transactionRequestDTO.getMerchant());
+            Optional<Merchant> merchantOptional = merchantService.findByName(merchantName);
+            Optional<AccountCategory> accountCategoryOptional;
+            Merchant merchant;
+            if (merchantOptional.isPresent()) {
+            merchant = merchantOptional.get();
+                log.info("Transaction::authorize - try to find accountCategory (merchant), mcc -> {}", merchant.getMccsFromCategory());
+                accountCategoryOptional = account.findCategoryByMccs(merchant.getMccsFromCategory());
+                if (accountCategoryOptional.isPresent() && accountCategoryOptional.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                    log.info("Transaction::authorize - set mcc from merchant");
+                    transactionRequestDTO.setMcc(merchant.getMccsFromCategory().stream().findFirst().orElse(CASH));
+                    merchant = upsertMerchant(merchantName, accountCategoryOptional.get().getCategory().getId());
+                    return processTransaction(transactionRequestDTO, account, accountCategoryOptional.get(), merchant);
+                }
+            }
+
+            accountCategoryOptional = account.findCategoryByMccs(Collections.singletonList(transactionRequestDTO.getMcc()));
+            if (accountCategoryOptional.isPresent() && accountCategoryOptional.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                merchant = upsertMerchant(merchantName, accountCategoryOptional.get().getCategory().getId());
+                return processTransaction(transactionRequestDTO, account, accountCategoryOptional.get(), merchant);
+            }
+
+            log.info("Transaction::authorize - account does not have mcc; try to authorize with fallback using CASH category");
+            transactionRequestDTO.setMcc(CASH);
+            accountCategoryOptional = account.findCategoryByMccs(Collections.singletonList(CASH));
+            if (accountCategoryOptional.isPresent() && accountCategoryOptional.get().hasEnoughCredit(transactionRequestDTO.getTotalAmount())) {
+                merchant = upsertMerchant(merchantName, accountCategoryOptional.get().getCategory().getId());
+                return processTransaction(transactionRequestDTO, account, accountCategoryOptional.get(), merchant);
+            }
+            log.info("Transaction::authorize - no cash found for any category, return status");
+            return new TransactionResponseDTO("51"); // No sufficient credit
+
         } catch (Exception e) {
-            log.error("Transaction::authorize - ERROR: error -> {}", e.getMessage());
+            log.error("Transaction::authorize - ERROR: {}", e.getMessage());
+            return new TransactionResponseDTO("07");
         }
-        return new TransactionResponseDTO("07");
+    }
+
+    private String formatMerchantName(String merchantName) {
+        return merchantName.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    public Merchant upsertMerchant(String merchantName, UUID categoryId) {
+        log.info("Transaction::upsertMerchant - upsert merchant information -> {} for category -> {}", merchantName, categoryId);
+        return merchantService.upsertMerchant(merchantName, categoryId);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public TransactionResponseDTO updateAccountAndAuthorizeTransaction(
+    public TransactionResponseDTO processTransaction(
             TransactionRequestDTO transactionRequestDTO,
             Account account,
-            AccountCategory accountCategory
+            AccountCategory accountCategory,
+            Merchant merchant
     ) {
-        log.info("Transaction::updateAccountAndAuthorizeTransaction - has enough amount; subtract value and update timestamp");
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - subtract value and update timestamp from account");
         accountCategory.setTotalAmount(accountCategory.getTotalAmount() - transactionRequestDTO.getTotalAmount());
         account.setUpdatedAt(LocalDateTime.now());
         log.info("Transaction::updateAccountAndAuthorizeTransaction - save account changes in database");
-        this.accountRepository.save(account);
+        accountRepository.save(account);
 
-        log.info("Transaction::updateAccountAndAuthorizeTransaction - create transaction and save in database");
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - create transaction");
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 transactionRequestDTO.getAccountId(),
+                accountCategory.getCategory().getId(),
+                merchant.getId(),
                 transactionRequestDTO.getMcc(),
-                transactionRequestDTO.getMerchant(),
                 transactionRequestDTO.getTotalAmount(),
                 LocalDateTime.now(),
-                LocalDateTime.now());
-        this.transactionRepository.save(transaction);
-        log.info("Transaction::updateAccountAndAuthorizeTransaction - return status OK transaction");
-        return new TransactionResponseDTO("00");
+                LocalDateTime.now()
+        );
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - save transaction");
+        transactionRepository.save(transaction);
+        log.info("Transaction::updateAccountAndAuthorizeTransaction - return status OK");
+        return new TransactionResponseDTO("00"); // Transaction successful
     }
 }

@@ -15,11 +15,13 @@ public class AccountCategory {
     @Id
     @ManyToOne
     @JoinColumn(name = "account_id", referencedColumnName = "id")
+    @MapsId("accountId")
     private Account account;
 
     @Id
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "id")
+    @MapsId("categoryId")
     private Category category;
 
     private float totalAmount;

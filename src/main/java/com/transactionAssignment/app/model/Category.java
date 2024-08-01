@@ -23,6 +23,9 @@ public class Category {
     @OneToMany(mappedBy = "category")
     private List<AccountCategory> accountCategories;
 
+    @OneToMany(mappedBy = "categoryId")
+    private List<MccCategory> mccCategories;
+
     @NotNull
     private LocalDateTime createdAt;
 

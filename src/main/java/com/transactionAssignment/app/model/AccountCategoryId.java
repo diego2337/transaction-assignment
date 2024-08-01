@@ -4,11 +4,12 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 @Data
 public class AccountCategoryId implements Serializable {
     private String account;
-    private String category;
+    private UUID category;
 
     @Override
     public int hashCode() {
