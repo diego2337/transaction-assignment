@@ -141,6 +141,7 @@ public class DistributedLockingExample {
 ```
 
 ## TODO
+- Caching.
 - Create integration tests.
 - Implement distributed locking using [Jedis](https://github.com/redis/jedis).
 - Create a stress test to validate distributed locking using [JMeter](https://jmeter.apache.org/).
