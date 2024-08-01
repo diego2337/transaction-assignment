@@ -3,7 +3,7 @@ package com.transactionAssignment.app.controller;
 import com.transactionAssignment.app.dto.TransactionRequestDTO;
 import com.transactionAssignment.app.dto.TransactionResponseDTO;
 import com.transactionAssignment.app.service.TransactionService;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,12 +21,19 @@ import javax.validation.Valid;
 @RestController
 @Validated
 @RequestMapping("/authorizer")
+@Api(value = "Transaction API", tags = {"Transaction"})
 public class TransactionController {
     private final TransactionService transactionService;
 
-    @ApiOperation(value = "Autoriza a transação de um MCC")
+    @ApiOperation(value = "Authorize a transaction for an MCC", notes = "This endpoint authorizes a transaction based on the provided MCC.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "", response = TransactionResponseDTO.class)
+    })
     @PostMapping("/transaction")
-    public ResponseEntity<TransactionResponseDTO> authorize(@Valid @RequestBody TransactionRequestDTO req) {
+    public ResponseEntity<TransactionResponseDTO> authorize(
+            @ApiParam(value = "Transaction request details", required = true)
+            @Valid @RequestBody TransactionRequestDTO req
+    ) {
         try {
             log.info("TransactionController::config req={}", req);
             TransactionResponseDTO res = transactionService.authorize(req);
