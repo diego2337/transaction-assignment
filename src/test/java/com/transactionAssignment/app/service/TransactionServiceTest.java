@@ -40,9 +40,6 @@ public class TransactionServiceTest {
     TransactionRepository transactionRepository;
 
     @Mock
-    CategoryRepository categoryRepository;
-
-    @Mock
     MerchantService merchantService;
 
     @BeforeAll
@@ -55,14 +52,12 @@ public class TransactionServiceTest {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account");
         doReturn(Optional.of(expectedAccount)).when(accountRepository).findById(transactionRequestDTO.getAccountId());
-        doReturn(Optional.of(new Category())).when(categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Fixture.from(Merchant.class).gimme("merchant-food")).when(transactionService).upsertMerchant(any(), any());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals("00", transactionResponseDTO.getCode());
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
-        verify(categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(transactionService, times(1)).processTransaction(any(), any(), any(), any());
     }
 
@@ -75,7 +70,6 @@ public class TransactionServiceTest {
 
         assertEquals("07", transactionResponseDTO.getCode());
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
-        verify(categoryRepository, never()).findById(transactionRequestDTO.getMcc());
         verify(transactionService, never()).processTransaction(any(), any(), any(), any());
     }
 
@@ -85,14 +79,12 @@ public class TransactionServiceTest {
         Account expectedAccount = Fixture.from(Account.class).gimme("account-food-and-cash");
         TransactionRequestDTO transactionRequestDTOSpy = Mockito.spy(transactionRequestDTO);
         doReturn(Optional.of(expectedAccount)).when(accountRepository).findById(transactionRequestDTO.getAccountId());
-        doReturn(Optional.of(new Category())).when(categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Fixture.from(Merchant.class).gimme("merchant-cash")).when(transactionService).upsertMerchant(any(), any());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTOSpy);
 
         assertEquals("00", transactionResponseDTO.getCode());
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
-        verify(categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(transactionService, times(1)).processTransaction(any(), any(), any(), any());
     }
 
@@ -101,13 +93,11 @@ public class TransactionServiceTest {
         TransactionRequestDTO transactionRequestDTO = Fixture.from(TransactionRequestDTO.class).gimme("valid-food");
         Account expectedAccount = Fixture.from(Account.class).gimme("account-with-no-money");
         doReturn(Optional.of(expectedAccount)).when(accountRepository).findById(transactionRequestDTO.getAccountId());
-        doReturn(Optional.of(new Category())).when(categoryRepository).findById(transactionRequestDTO.getMcc());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTO);
 
         assertEquals("51", transactionResponseDTO.getCode());
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
-        verify(categoryRepository, times(1)).findById(any());
         verify(transactionService, never()).processTransaction(any(), any(), any(), any());
     }
 
@@ -117,7 +107,6 @@ public class TransactionServiceTest {
         Account expectedAccount = Fixture.from(Account.class).gimme("account-food-and-cash");
         TransactionRequestDTO transactionRequestDTOSpy = Mockito.spy(transactionRequestDTO);
         doReturn(Optional.of(expectedAccount)).when(accountRepository).findById(transactionRequestDTO.getAccountId());
-        doReturn(Optional.empty()).when(categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Fixture.from(Merchant.class).gimme("merchant-cash")).when(transactionService).upsertMerchant(any(), any());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTOSpy);
@@ -125,7 +114,6 @@ public class TransactionServiceTest {
         assertEquals("00", transactionResponseDTO.getCode());
         verify(transactionRequestDTOSpy, times(1)).setMcc(CASH);
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
-        verify(categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(transactionService, times(1)).processTransaction(any(), any(), any(), any());
     }
 
@@ -145,7 +133,6 @@ public class TransactionServiceTest {
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
         verify(transactionRequestDTOSpy, times(1)).setMcc(
                 String.valueOf(merchant.getMccsFromCategory().stream().findFirst().orElse(null)));
-        verify(categoryRepository, never()).findById(any());
         verify(transactionService, times(1)).processTransaction(any(), any(), any(), any());
     }
 
@@ -156,7 +143,6 @@ public class TransactionServiceTest {
         Account account = Fixture.from(Account.class).gimme("account");
         doReturn(Optional.of(account)).when(accountRepository).findById(transactionRequestDTO.getAccountId());
         doReturn(Optional.empty()).when(merchantService).findByName(any());
-        doReturn(Optional.of(new Category())).when(categoryRepository).findById(transactionRequestDTO.getMcc());
         doReturn(Fixture.from(Merchant.class).gimme("merchant-meal")).when(transactionService).upsertMerchant(any(), any());
 
         TransactionResponseDTO transactionResponseDTO = transactionService.authorize(transactionRequestDTOSpy);
@@ -164,7 +150,6 @@ public class TransactionServiceTest {
         assertEquals("00", transactionResponseDTO.getCode());
         verify(accountRepository, times(1)).findById(transactionRequestDTO.getAccountId());
         verify(transactionRequestDTOSpy, never()).setMcc(any());
-        verify(categoryRepository, times(1)).findById(transactionRequestDTO.getMcc());
         verify(transactionService, times(1)).processTransaction(any(), any(), any(), any());
     }
 

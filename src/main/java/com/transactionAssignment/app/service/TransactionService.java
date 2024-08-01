@@ -32,9 +32,6 @@ public class TransactionService {
     private TransactionRepository transactionRepository;
 
     @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
     private MerchantService merchantService;
 
     public static final String CASH = "5011";
