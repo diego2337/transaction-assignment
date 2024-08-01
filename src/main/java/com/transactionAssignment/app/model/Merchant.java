@@ -15,10 +15,10 @@ import java.util.UUID;
 @Table(name = "merchant")
 @RequiredArgsConstructor
 public class Merchant {
-    public Merchant(UUID uuid, String name, String mcc, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Merchant(UUID uuid, String name, UUID categoryId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = uuid;
         this.name = name;
-        this.mcc = mcc;
+        this.categoryId = categoryId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -30,10 +30,10 @@ public class Merchant {
     private String name;
 
     @NotNull
-    private String mcc;
+    private UUID categoryId;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "mcc", referencedColumnName = "mcc", insertable = false, updatable = false)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "categoryId", referencedColumnName = "id", insertable = false, updatable = false)
     private Category category;
 
     @NotNull

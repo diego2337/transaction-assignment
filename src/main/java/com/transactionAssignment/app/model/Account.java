@@ -29,6 +29,6 @@ public class Account {
     private LocalDateTime updatedAt;
 
     public Optional<AccountCategory> findCategoryByMcc(String mcc) {
-        return accountCategories.stream().filter(accountCategory -> accountCategory.getCategory().getMcc().equals(mcc)).findFirst();
+        return accountCategories.stream().filter(accountCategory -> accountCategory.getCategory().getName().equals(mcc)).findFirst();
     }
 }

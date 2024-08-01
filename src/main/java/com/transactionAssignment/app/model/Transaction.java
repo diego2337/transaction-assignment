@@ -15,11 +15,21 @@ import java.util.UUID;
 @Table(name = "transaction")
 @RequiredArgsConstructor
 public class Transaction {
-    public Transaction(UUID uuid, String accountId, String mcc, String merchant, float amount, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Transaction(
+            UUID uuid,
+            String accountId,
+            UUID categoryId,
+            UUID merchantId,
+            String mcc,
+            float amount,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
         this.id = uuid;
         this.accountId = accountId;
+        this.categoryId = categoryId;
+        this.merchantId = merchantId;
         this.mcc = mcc;
-        this.merchant = merchant;
         this.totalAmount = amount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -32,11 +42,13 @@ public class Transaction {
     private String accountId;
 
     @NotNull
-    @Column(name = "mcc")
-    private String mcc;
+    private UUID categoryId;
 
     @NotNull
-    private String merchant;
+    private UUID merchantId;
+
+    @NotNull
+    private String mcc;
 
     @NotNull
     private float totalAmount;
@@ -46,8 +58,12 @@ public class Transaction {
     private Account account;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "mcc", referencedColumnName = "mcc", insertable = false, updatable = false)
+    @JoinColumn(name = "categoryId", referencedColumnName = "id", insertable = false, updatable = false)
     private Category category;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "merchantId", referencedColumnName = "id", insertable = false, updatable = false)
+    private Merchant merchant;
 
     @NotNull
     private LocalDateTime createdAt;

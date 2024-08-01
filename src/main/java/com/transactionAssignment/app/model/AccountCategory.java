@@ -19,7 +19,7 @@ public class AccountCategory {
 
     @Id
     @ManyToOne
-    @JoinColumn(name = "category_id", referencedColumnName = "mcc")
+    @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 
     private float totalAmount;
