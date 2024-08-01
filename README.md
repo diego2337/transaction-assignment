@@ -145,3 +145,4 @@ public class DistributedLockingExample {
 - Implement distributed locking using [Jedis](https://github.com/redis/jedis).
 - Create a stress test to validate distributed locking using [JMeter](https://jmeter.apache.org/).
 - Fix Dockerfile to run with database.
+- Consider adding timestamps for `account_category` table.
